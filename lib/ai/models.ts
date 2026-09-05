@@ -1,5 +1,3 @@
-export const DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini";
-
 export const titleModel = {
   description: "Fast model for title generation",
   gatewayOrder: [],
@@ -23,14 +21,44 @@ export type ChatModel = {
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
 };
 
-export const chatModels: ChatModel[] = [
+const defaultChatModels: ChatModel[] = [
   {
-    description: "โมเดล GPT สำหรับแชตและการใช้เครื่องมือ",
+    description: "โมเดลเร็วสำหรับแชต งานเขียน และการใช้เครื่องมือ",
     id: "openai/gpt-4o-mini",
     name: "GPT-4o mini",
     provider: "openai",
   },
 ];
+
+function getConfiguredModels(): ChatModel[] {
+  const raw = process.env.AI_MODELS_JSON;
+  if (!raw) {
+    return defaultChatModels;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return defaultChatModels;
+    }
+
+    const models = parsed.filter((model): model is ChatModel =>
+      Boolean(
+        model &&
+          typeof model === "object" &&
+          typeof (model as ChatModel).id === "string" &&
+          typeof (model as ChatModel).name === "string" &&
+          typeof (model as ChatModel).provider === "string"
+      )
+    );
+    return models.length > 0 ? models : defaultChatModels;
+  } catch {
+    console.warn("AI_MODELS_JSON is not valid JSON; using the default model.");
+    return defaultChatModels;
+  }
+}
+
+export const chatModels: ChatModel[] = getConfiguredModels();
 
 export async function getCapabilities(): Promise<
   Record<string, ModelCapabilities>
@@ -76,6 +104,8 @@ export async function getCapabilities(): Promise<
 }
 
 export const isDemo = process.env.IS_DEMO === "1";
+
+export const DEFAULT_CHAT_MODEL = chatModels[0]?.id ?? "openai/gpt-4o-mini";
 
 type GatewayModel = {
   id: string;

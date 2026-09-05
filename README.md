@@ -75,3 +75,20 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000).
+
+## Bring your own key และผู้ให้บริการหลายราย
+
+ระบบรองรับผู้ให้บริการที่ใช้ **OpenAI-compatible Chat Completions API** โดยคีย์ทั้งหมดถูกอ่านเฉพาะฝั่งเซิร์ฟเวอร์และไม่ถูกส่งไปยัง browser ผู้ใช้สามารถใช้ `OPENAI_API_KEY` ร่วมกับ `OPENAI_BASE_URL` สำหรับ endpoint เดียว หรือกำหนดหลายรายผ่าน `AI_PROVIDER_CONFIG_JSON` ได้ เช่น `groq`, `openrouter` หรือ gateway ภายในองค์กร
+
+โมเดลแต่ละรายการใช้รูปแบบ `provider/model-name` เช่น `openai/gpt-4o-mini` หรือ `groq/llama-3.3-70b-versatile` รายการโมเดลที่ปรากฏในตัวเลือกจะอ่านจาก `AI_MODELS_JSON` และโมเดลรายการแรกจะเป็นค่าเริ่มต้น ส่วน `AI_TITLE_MODEL` ใช้กำหนดโมเดลสำหรับตั้งชื่อแชตอัตโนมัติ
+
+> ห้ามใส่ API key ในโค้ดฝั่ง client, ค่า `NEXT_PUBLIC_*`, git หรือไฟล์ที่อัปโหลดสู่ repository ให้เก็บ secrets ใน environment variables ของ deployment เท่านั้น
+
+```env
+OPENAI_API_KEY=sk-your-key
+OPENAI_BASE_URL=https://api.openai.com/v1
+AI_PROVIDER_CONFIG_JSON={"groq":{"apiKey":"gsk-your-key","baseURL":"https://api.groq.com/openai/v1"}}
+AI_MODELS_JSON=[{"id":"openai/gpt-4o-mini","name":"GPT-4o mini","provider":"openai","description":"Fast general-purpose model"},{"id":"groq/llama-3.3-70b-versatile","name":"Llama 3.3 70B","provider":"groq","description":"Fast open model"}]
+```
+
+ความสามารถเด่นของเวอร์ชันนี้คือ **Bring-your-own-key แบบไม่ผูก vendor**, **model catalog ที่ปรับเปลี่ยนได้โดยไม่แก้ UI**, และ **provider-aware routing** ซึ่งช่วยให้ทีมสลับ endpoint หรือเพิ่มผู้ให้บริการใหม่ได้โดยแก้เฉพาะ environment configuration
